@@ -9,7 +9,7 @@ PLATFORM = platform.platform()
 if 'Linux' in PLATFORM:
     port = parallel.ParallelPort(address='/dev/parport0')  # on MEG stim PC
 else:  # on Win this will work, on Mac we catch error below
-    port = parallel.ParallelPort(address=0xDFF8)  # on MEG stim PC
+    port = parallel.ParallelPort(address="LPT3") 
 
 # NB problems getting parallel port working under conda env
 # from psychopy.parallel._inpout32 import PParallelInpOut32
