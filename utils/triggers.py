@@ -5,11 +5,8 @@ Description: This file contains the code for sending triggers to the neuroimagin
 from psychopy import parallel
 import platform
 
-PLATFORM = platform.platform()
-if 'Linux' in PLATFORM:
-    port = parallel.ParallelPort(address='/dev/parport0')  # on MEG stim PC
-else:  # on Win this will work, on Mac we catch error below
-    port = parallel.ParallelPort(address=0x3FD8)
+port = parallel.ParallelPort(address=0x3FD8)
+print(f"Parallel port {port} initialised.")
 
 # NB problems getting parallel port working under conda env
 # from psychopy.parallel._inpout32 import PParallelInpOut32
