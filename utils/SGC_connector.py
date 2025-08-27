@@ -52,10 +52,13 @@ class BaseSGCConnector(ABC):
         self.send_command(command)
 
     def set_pulse_duration(self, duration=200):
-        if duration != 200:
-            raise NotImplementedError("Only 200 ms duration supported")
-        self.send_command("?L,20$DA#")
 
+        durations = {200: "?L,20$DA#", 100: "?L,10$D9#"}
+        if duration in durations:
+            self.send_command(durations[duration])
+        else:
+            raise NotImplementedError(f"Only {list(durations.keys())} ms duration supported")
+    
     def wakeup(self):
         self.send_command(self.WAKEUP_COMMAND)
 
@@ -79,10 +82,12 @@ class SGCConnector(BaseSGCConnector):
 
 
 class SGCFakeConnector(BaseSGCConnector):
-    def __init__(self, intensity_codes_path: Path, start_intensity=1):
+    def __init__(self, intensity_codes_path: Path, start_intensity=1, verbose:bool=False):
         super().__init__(intensity_codes_path, start_intensity)
         self.sent_commands : list[str] = []
+        self.verbose = verbose
 
     def send_command(self, command: str):
-        print(f"[FAKE SEND] {command}")  # or just log it
+        if self.verbose:
+            print(f"[FAKE SEND] {command}")  # or just log it
         self.sent_commands.append(command)
