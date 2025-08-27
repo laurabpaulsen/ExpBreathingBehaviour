@@ -16,7 +16,7 @@ print(f"Parallel port {port} initialised.")
 
 # Figure out whether to flip pins or fake it
 try:
-    port.setData(128)
+    port.setData(1)
 except NotImplementedError:
     def setParallelData(code=1):
         if code > 0:
