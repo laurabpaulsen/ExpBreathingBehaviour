@@ -212,11 +212,10 @@ if __name__ == "__main__":
         reset_QUEST=RESET_QUEST, # reset QUEST every x blocks
         ISIs=ISIS,#[1.5, 2, 2.5],
         trigger_mapping=create_trigger_mapping(),
-        send_trigger=True,
+        send_trigger=False,
         logfile = Path("output/test_SGC.csv"),
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
-        send_triggers = False,
         break_sound_path=None#Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
     )
     
