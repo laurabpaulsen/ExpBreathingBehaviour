@@ -23,12 +23,12 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
     def __init__(
             self, 
             trigger_mapping: dict,
-            ISIs:list[float],
-            order = list[int],
-            n_sequences: int = 10, 
-            prop_middle_index: list = [0.5, 0.5], 
-            intensities = {"salient": 6.0, "weak": 2.0},
-            trigger_duration = 0.001, 
+            ISIs: List[float],
+            order: List[int],
+            n_sequences: int = 10,
+            prop_middle_index: List[float] = [0.5, 0.5],
+            intensities: dict = {"salient": 6.0, "weak": 2.0},
+            trigger_duration: float = 0.001,
             QUEST_target: float = 0.75,
             reset_QUEST: Union[int, bool] = False, # how many blocks before resetting QUEST
             QUEST_plus: bool = True,
