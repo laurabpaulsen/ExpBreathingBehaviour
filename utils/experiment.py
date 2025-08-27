@@ -9,7 +9,6 @@ from psychopy.data import QuestPlusHandler, QuestHandler
 
 from utils.responses import KeyboardListener
 
-from playsound import playsound
 
 class Experiment:
     LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset\n"
@@ -115,6 +114,8 @@ class Experiment:
         self.QUEST_target = QUEST_target 
         self.QUEST_reset()
         self.break_sound_path = break_sound_path
+        if self.break_sound_path:
+            from playsound import playsound
 
     def play_break_sound(self):
         # Play a sound to indicate a break
