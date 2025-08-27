@@ -216,7 +216,7 @@ if __name__ == "__main__":
         reset_QUEST=RESET_QUEST, # reset QUEST every x blocks
         ISIs=ISIS,#[1.5, 2, 2.5],
         trigger_mapping=create_trigger_mapping(),
-        send_trigger=False,
+        send_trigger=True,
         logfile = Path("output/test_SGC.csv"),
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
