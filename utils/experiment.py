@@ -137,7 +137,7 @@ class Experiment:
             
                 self.events.extend(self.event_sequence(self.n_sequences, ISI, block_idx, reset_QUEST=reset))
         
-    def event_sequence(self, n_sequences, ISI, block_idx, n_salient=3, reset_QUEST: Union[int, None] = None) -> list[dict]:
+    def event_sequence(self, n_sequences, ISI, block_idx, n_salient=3, reset_QUEST: Union[int, None] = None) -> List[dict]:
         """
         Generate a sequence of events for a block
 
@@ -218,7 +218,7 @@ class Experiment:
         time.sleep(1)
 
 
-    def loop_over_events(self, events: list[dict], log_file):
+    def loop_over_events(self, events: List[dict], log_file):
         """
         Loop over the events in the experiment
         """
