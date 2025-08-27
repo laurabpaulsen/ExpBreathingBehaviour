@@ -1,5 +1,9 @@
 """
 VERSION B - discriminating weak index and ring finger targets following three salient rhythm-establishing stimuli presented to both fingers
+
+
+To run on stim PC at COBE lab run `python3.8 run_experiment.py` from the command prompt
+
 """
 import time
 from pathlib import Path
