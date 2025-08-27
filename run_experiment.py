@@ -1,12 +1,12 @@
 """
 VERSION B - discriminating weak index and ring finger targets following three salient rhythm-establishing stimuli presented to both fingers
 """
-from operator import index
 import time
 from pathlib import Path
 from typing import Union,List, Tuple, Optional
 from collections import Counter
 import random
+import os
 # local imports
 from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
@@ -17,7 +17,15 @@ RESET_QUEST = 8 # reset QUEST every x blocks
 ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]
 
 
-
+# check whether it is running on mac or windows
+if os.name == "posix":
+    # macOS
+    index_connector_port = "/dev/tty.usbserial-A50027EN"
+    middle_connector_port = "/dev/tty.usbserial-A50027ER"
+else:
+    # Windows
+    index_connector_port = "COM6"
+    middle_connector_port = "COM7"
 
 class MiddleIndexTactileDiscriminationTask(Experiment):
     def __init__(
@@ -164,8 +172,8 @@ if __name__ == "__main__":
     start_intensities = {"salient": 3.0, "weak": 1.} # SALIENT NEEDS TO BE AT LEAST xx BIGGER THAN WEAK
 
     connectors = {
-        "middle":  SGCConnector(port="/dev/tty.usbserial-A50027ER", intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        "index": SGCConnector(port="/dev/tty.usbserial-A50027EN", intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
         #"right": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
