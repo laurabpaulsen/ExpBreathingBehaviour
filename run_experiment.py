@@ -40,7 +40,7 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
             n_sequences: int = 10,
             prop_middle_index: List[float] = [0.5, 0.5],
             intensities: dict = {"salient": 6.0, "weak": 2.0},
-            trigger_duration: float = 0.01,
+            trigger_duration: float = 0.001,
             QUEST_target: float = 0.75,
             reset_QUEST: Union[int, bool] = False, # how many blocks before resetting QUEST
             QUEST_plus: bool = True,
