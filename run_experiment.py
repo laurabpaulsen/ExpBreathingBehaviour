@@ -15,9 +15,9 @@ import os
 from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
 
-N_REPEATS_BLOCKS = 4
-N_SEQUENCE_BLOCKS = 6
-RESET_QUEST = 8 # reset QUEST every x blocks
+N_REPEATS_BLOCKS = 1
+N_SEQUENCE_BLOCKS = 4
+RESET_QUEST = 3 # reset QUEST every x blocks
 ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]
 
 
@@ -173,7 +173,7 @@ def create_trigger_mapping(
 
 if __name__ == "__main__":
 
-    start_intensities = {"salient": 3.0, "weak": 1.} # SALIENT NEEDS TO BE AT LEAST xx BIGGER THAN WEAK
+    start_intensities = {"salient": 3.0, "weak": 1.5} # SALIENT NEEDS TO BE AT LEAST xx BIGGER THAN WEAK
 
     connectors = {
         "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
