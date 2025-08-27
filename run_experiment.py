@@ -216,6 +216,7 @@ if __name__ == "__main__":
         logfile = Path("output/test_SGC.csv"),
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
+        send_triggers = False,
         break_sound_path=None#Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
     )
     
