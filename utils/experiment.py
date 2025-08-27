@@ -8,7 +8,7 @@ from psychopy.clock import CountdownTimer
 from psychopy.data import QuestPlusHandler, QuestHandler
 
 from utils.responses import KeyboardListener
-
+from utils.triggers import setParallelData
 
 class Experiment:
     LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset\n"
@@ -89,8 +89,7 @@ class Experiment:
         self.prop_target1_target2 = prop_target1_target2
         self.trigger_duration = trigger_duration
         self.send_trigger = send_trigger
-        if self.send_trigger:
-            from utils.triggers import setParallelData
+
         self.countdown_timer = CountdownTimer() 
         self.events = []
 

@@ -18,6 +18,7 @@ print(f"Parallel port {port} initialised.")
 try:
     port.setData(1)
 except NotImplementedError:
+    print(f"Parallel port {port} not implemented???.")
     def setParallelData(code=1):
         if code > 0:
             # logging.exp('TRIG %d (Fake)' % code)
