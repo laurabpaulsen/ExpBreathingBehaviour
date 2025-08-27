@@ -6,7 +6,6 @@ import time
 from pathlib import Path
 from typing import Union,List, Tuple, Optional
 from collections import Counter
-import numpy as np
 import random
 # local imports
 from utils.experiment import Experiment
