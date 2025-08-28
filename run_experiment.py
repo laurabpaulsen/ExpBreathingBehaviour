@@ -11,15 +11,24 @@ from typing import Union,List, Tuple, Optional
 from collections import Counter
 import random
 import os
+import numpy as np
+
 # local imports
 from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
+from utils.triggers import create_trigger_mapping
 
-N_REPEATS_BLOCKS = 1
-N_SEQUENCE_BLOCKS = 4
-RESET_QUEST = 3 # reset QUEST every x blocks
-ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]
 
+# CONFIG
+# -------------------
+N_REPEATS_BLOCKS = 4
+N_SEQUENCE_BLOCKS = 6
+RESET_QUEST = 8 # reset QUEST every x blocks
+ISIS = [1.21, 1.34, 1.58, 1.82, 2.02] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
+VALID_INTENSITIES = np.arange(1.0, 10.1, 0.1).round(1).tolist()
+
+OUTPUT_PATH = Path(__file__).parent / "output"
+OUTPUT_PATH.mkdir(exist_ok=True)
 
 # check whether it is running on mac or windows
 if os.name == "posix":
@@ -30,6 +39,129 @@ else:
     # Windows
     index_connector_port = "COM6"
     middle_connector_port = "COM7"
+
+
+# UTILITIES
+# -------------
+def build_block_order(
+    wanted_transitions: List[Tuple[int, int]],
+    start_blocks: Optional[List[int]] = None
+) -> List[int]:
+    """
+    Build a block order that exactly produces the given list of transitions.
+
+    Parameters:
+        wanted_transitions (list of tuples): Each tuple represents a transition (e.g., (0, 1)).
+        start_blocks (list of int, optional): Block types to consider as starting points. 
+                                              Defaults to all blocks present in wanted_transitions.
+
+    Returns:
+        list of int: A sequence of blocks that yields the specified transitions.
+
+    Raises:
+        ValueError: If no valid order can be found.
+    """
+    wanted_counter = Counter(wanted_transitions)
+
+    # Infer block types from transition tuples
+    block_types = list(set(b for pair in wanted_transitions for b in pair))
+
+    def backtrack(path):
+        if sum(wanted_counter.values()) == 0:
+            return path
+
+        last = path[-1]
+        next_options = block_types[:]
+        random.shuffle(next_options)
+
+        for next_block in next_options:
+            if next_block == last:
+                continue
+            candidate = (last, next_block)
+            if wanted_counter[candidate] > 0:
+                wanted_counter[candidate] -= 1
+                result = backtrack(path + [next_block])
+                if result:
+                    return result
+                wanted_counter[candidate] += 1  # backtrack
+
+        return None
+
+    # If not specified, start from any available block type
+    if start_blocks is None:
+        start_blocks = block_types
+    else:
+        start_blocks = [s for s in start_blocks if s in block_types]
+
+    for start_block in random.sample(start_blocks, len(start_blocks)):
+        result = backtrack([start_block])
+        if result:
+            return result
+
+    raise ValueError("No valid order found")
+
+
+
+def print_experiment_information(experiment):
+
+    duration = experiment.estimate_duration()
+    print(f"The experiment is estimated to last {duration/60} minutes")
+    experiment.setup_experiment()
+
+    # Extract event_type from each dictionary
+    event_types = [event['event_type'] for event in experiment.events if not event == "break"]
+
+    # Count each event_type
+    event_counts = Counter(event_types)
+
+    # Print the results
+    for event_type, count in event_counts.items():
+        print(f"{event_type}: {count}")
+
+    # Count individual blocks
+    block_counts = Counter(experiment.order)
+
+    # Count transitions
+    transitions = list(zip(experiment.order, experiment.order[1:]))
+    transition_counts = Counter(transitions)
+    # Display results
+    print("Block counts:")
+    for block, count in block_counts.items():
+        print(f"  {block}: {count}")
+
+    print("\nTransition counts:")
+    for (a, b), count in transition_counts.items():
+        print(f"  ({a} → {b}): {count}")
+
+def get_participant_info():
+    pid = input("Enter participant ID: ").strip()
+
+    while True:
+        try:
+            salient = float(input("Enter salient intensity (1.0–10.0): "))
+            if salient not in VALID_INTENSITIES:
+                raise ValueError
+            break
+        except ValueError:
+            print("❌ Invalid input. Please enter a number between 1.0 and 10.0 in steps of 0.1.")
+
+    weak = np.round(salient / 2, 1)
+    if weak not in VALID_INTENSITIES:
+        raise ValueError(f"Weak intensity {weak} is invalid. Adjust salient value.")
+
+    print("\nParticipant Information:")
+    print(f" ID: {pid}")
+    print(f" Salient Intensity: {salient}")
+    print(f" Weak Intensity: {weak}")
+
+
+    confirm = input("Is this information correct? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("Exiting experiment setup.")
+        exit()
+
+    return pid, {"salient": salient, "weak": weak}
+
 
 class MiddleIndexTactileDiscriminationTask(Experiment):
     def __init__(
@@ -92,93 +224,29 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
     
 
 
-def build_block_order(
-    wanted_transitions: List[Tuple[int, int]],
-    start_blocks: Optional[List[int]] = None
-) -> List[int]:
-    """
-    Build a block order that exactly produces the given list of transitions.
-
-    Parameters:
-        wanted_transitions (list of tuples): Each tuple represents a transition (e.g., (0, 1)).
-        start_blocks (list of int, optional): Block types to consider as starting points. 
-                                              Defaults to all blocks present in wanted_transitions.
-
-    Returns:
-        list of int: A sequence of blocks that yields the specified transitions.
-
-    Raises:
-        ValueError: If no valid order can be found.
-    """
-    wanted_counter = Counter(wanted_transitions)
-
-    # Infer block types from transition tuples
-    block_types = list(set(b for pair in wanted_transitions for b in pair))
-
-    def backtrack(path):
-        if sum(wanted_counter.values()) == 0:
-            return path
-
-        last = path[-1]
-        next_options = block_types[:]
-        random.shuffle(next_options)
-
-        for next_block in next_options:
-            if next_block == last:
-                continue
-            candidate = (last, next_block)
-            if wanted_counter[candidate] > 0:
-                wanted_counter[candidate] -= 1
-                result = backtrack(path + [next_block])
-                if result:
-                    return result
-                wanted_counter[candidate] += 1  # backtrack
-
-        return None
-
-    # If not specified, start from any available block type
-    if start_blocks is None:
-        start_blocks = block_types
-    else:
-        start_blocks = [s for s in start_blocks if s in block_types]
-
-    for start_block in random.sample(start_blocks, len(start_blocks)):
-        result = backtrack([start_block])
-        if result:
-            return result
-
-    raise ValueError("No valid order found")
-
-def create_trigger_mapping(
-        stim = 1,
-        target = 2,
-        middle = 4,
-        index = 8,
-        response = 16,
-        correct = 32,
-        incorrect = 64):
-    
-    trigger_mapping = {
-        "stim/salient": stim,
-        "target/middle": target + middle,
-        "target/index": target + index,
-        "response/index/correct": response + index + correct,
-        "response/middle/incorrect": response + middle + incorrect,
-        "response/middle/correct": response + middle + correct,
-        "response/index/incorrect": response + index + incorrect, 
-        }
-
-    return trigger_mapping
-
 
 if __name__ == "__main__":
+    # --- Collect participant info ---
+    participant_id, start_intensities = get_participant_info()
 
-    start_intensities = {"salient": 3.0, "weak": 1.5} # SALIENT NEEDS TO BE AT LEAST xx BIGGER THAN WEAK
+    # Setup logfile based on participant ID
+    logfile = OUTPUT_PATH / f"{participant_id}_behavioural_data.csv"
+    
+
+    # check if it already exists
+    if logfile.exists():
+        i = 1
+        while logfile.exists():
+            logfile = OUTPUT_PATH / f"{participant_id}_behavioural_data_{i}.csv"
+            i += 1
+
+    print(f"Behavioural data will be saved to: {logfile}")
 
     connectors = {
-        "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"right": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
+        #"middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        #"index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
     # wait 2 seconds
@@ -188,7 +256,7 @@ if __name__ == "__main__":
         connector.set_pulse_duration(100)
         connector.change_intensity(start_intensities["salient"])
 
-    block_types = [0, 1, 2, 3, 4]
+    block_types = list(range(len(ISIS)))  # one block type per ISI
     wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
     order = []
 
@@ -204,9 +272,6 @@ if __name__ == "__main__":
         order.extend(tmp_order)
         order.append("break")
 
-
-
-
     
     experiment = MiddleIndexTactileDiscriminationTask(
         intensities=start_intensities,
@@ -214,47 +279,17 @@ if __name__ == "__main__":
         order = order,
         QUEST_plus=False,
         reset_QUEST=RESET_QUEST, # reset QUEST every x blocks
-        ISIs=ISIS,#[1.5, 2, 2.5],
+        ISIs=ISIS,
         trigger_mapping=create_trigger_mapping(),
         send_trigger=True,
-        logfile = Path("output/test_SGC.csv"),
+        logfile = logfile,
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
-        break_sound_path=None#Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
+        break_sound_path=None #Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
     )
-    
-    duration = experiment.estimate_duration()
-    print(f"The experiment is estimated to last {duration/60} minutes")
-    experiment.setup_experiment()
 
-
-
-    # Extract event_type from each dictionary
-    event_types = [event['event_type'] for event in experiment.events if not event == "break"]
-
-    # Count each event_type
-    event_counts = Counter(event_types)
-
-    # Print the results
-    for event_type, count in event_counts.items():
-        print(f"{event_type}: {count}")
-
-    # Count individual blocks
-    block_counts = Counter(order)
-
-    # Count transitions
-    transitions = list(zip(order, order[1:]))
-    transition_counts = Counter(transitions)
-    # Display results
-    print("Block counts:")
-    for block, count in block_counts.items():
-        print(f"  {block}: {count}")
-
-    print("\nTransition counts:")
-    for (a, b), count in transition_counts.items():
-        print(f"  ({a} → {b}): {count}")
-
-
+    print_experiment_information(experiment)
+    experiment.check_in_on_participant()
     experiment.run()
 
 
