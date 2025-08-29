@@ -25,10 +25,9 @@ class Experiment:
             intensities: dict = {"salient": 6.0, "weak": 2.0},
             trigger_duration: float = 0.001,
             send_trigger: bool = False,
-            QUEST_target: float = 0.75,
+            QUEST_target: float = 0.60,
             reset_QUEST: Union[int, bool] = False, # how many blocks before resetting QUEST
             QUEST_plus: bool = True,
-            ISI_adjustment_factor: float = 0.1,
             logfile: Path = Path("data.csv"),
             break_sound_path: Union[Path, str, None] = None,
             ):
@@ -69,9 +68,6 @@ class Experiment:
             Set to an integer for resets every X blocks or False to disable resetting.
             Defaults to False.
         
-        ISI_adjustment_factor : float, optional
-            Factor for adjusting inter-stimulus intervals dynamically based on respiratory rate. Defaults to 0.1.
-        
         logfile : Path, optional
             Path to the log file for saving experimental data. Defaults to Path("data.csv").
 
@@ -92,8 +88,6 @@ class Experiment:
 
         self.countdown_timer = CountdownTimer() 
         self.events = []
-
-        self.ISI_adjustment_factor = ISI_adjustment_factor
         
         self.target_1 = target_1
         self.target_2 = target_2
@@ -105,16 +99,21 @@ class Experiment:
             target_2: ['1', 'b']
         }
         
+        
         # QUEST parameters
         self.intensities =  intensities 
         self.QUEST_start_val = intensities["weak"] # NOTE: do we want to reset QUEST with the startvalue or start from a percentage of the weak intensity stimulation?
         self.max_intensity_weak = intensities["salient"] - 0.5
         self.QUEST_plus = QUEST_plus
         self.QUEST_target = QUEST_target 
+        self.QUEST_n_resets = 0
         self.QUEST_reset()
         self.break_sound_path = break_sound_path
         if self.break_sound_path:
             from playsound import playsound
+
+
+        self.start_time = time.perf_counter()
 
     def play_break_sound(self):
         # Play a sound to indicate a break
@@ -195,8 +194,15 @@ class Experiment:
     
     def QUEST_reset(self):
         """Reset the QUEST procedure and update intensity."""
+
+        # update the quest start val to the previous weak intensity
+        if self.QUEST_n_resets > 0:
+            self.QUEST_start_val = self.QUEST.mean()
+            print(f"QUEST start value updated to: {self.QUEST_start_val}")
         self.QUEST = self.make_QUEST_handler()
+
         self.update_weak_intensity()
+        self.QUEST_n_resets += 1
         print("QUEST has been reset")
 
     def update_weak_intensity(self):
@@ -207,14 +213,14 @@ class Experiment:
         self.intensities["weak"] = round(proposed_intensity, 1)
 
     def deliver_stimulus(self, event_type):
-        pass
-    
-    def prepare_for_next_stimulus(self, event_type, next_event_type):
-        pass
+        raise NotImplementedError("Subclasses should implement this!")
 
-    def check_in_on_participant(self):
-        input("Check in on the participant. Press Enter to continue...")
-        time.sleep(1)
+    def prepare_for_next_stimulus(self, event_type, next_event_type):
+        raise NotImplementedError("Subclasses should implement this!")
+
+    def check_in_on_participant(self, message: str = "Check in on the participant."):
+        input(message + " Press Enter to continue...")
+        time.sleep(2)
 
 
     def loop_over_events(self, events: List[dict], log_file):
@@ -239,11 +245,12 @@ class Experiment:
             
             event_time = time.perf_counter() - self.start_time
             
-            self.log_event(
-                **trial,
-                event_time = event_time,
-                intensity=intensity,
-                trigger=self.trigger_mapping[event_type], 
+            if log_file:
+                self.log_event(
+                    **trial,
+                    event_time=event_time,
+                    intensity=intensity,
+                    trigger=self.trigger_mapping[event_type],
                 correct="NA",
                 log_file = log_file
                 )
@@ -281,18 +288,18 @@ class Experiment:
                         
                         # overwrite event type for logging
                         trial["event_type"] = "response"
-                        
-                        self.log_event(
-                            **trial,
-                            event_time=time.perf_counter() - self.start_time, 
-                            intensity=intensity, 
-                            trigger=response_trigger, 
-                            correct=correct, 
-                            log_file = log_file
+                        if log_file:
+                            self.log_event(
+                                **trial,
+                                event_time=time.perf_counter() - self.start_time, 
+                                intensity=intensity, 
+                                trigger=response_trigger, 
+                                correct=correct, 
+                                log_file=log_file
                             )
                         self.listener.active = False
-         
-                        self.QUEST.addResponse(correct, intensity = intensity)
+
+                        self.QUEST.addResponse(correct, intensity=intensity)
                         self.update_weak_intensity()
 
             # stop listening for responses
@@ -300,26 +307,8 @@ class Experiment:
 
 
     def log_event(self, event_time, block, ISI, intensity, event_type, trigger, n_in_block, correct, reset_QUEST, log_file):
-        log_file.write(f"{event_time},{block},{ISI},{intensity},{event_type},{trigger},{n_in_block},{correct}, {reset_QUEST}\n")
+        log_file.write(f"{event_time},{block},{ISI},{intensity},{event_type},{trigger},{n_in_block},{correct},{reset_QUEST}\n")
     
-    
-    def validate_ISI(self) -> bool:
-        """
-        Validate ISI values to ensure they are within a reasonable range and not multiples of 50 Hz.
-        """
-        # Check for negative ISI
-        if any(ISI < 0 for ISI in self.ISIs):
-            print("Warning: ISI is negative, please check the input respiratory rate and adjustment factor.")
-            return False
-
-        # Check if ISI is close to a multiple of 1/50 (i.e., could align with 50Hz interference)
-        for ISI in self.ISIs:
-            if abs((ISI * 50) - round(ISI * 50)) < 1e-2:
-                print(f"Warning: ISI {ISI:.4f}s is too close to a multiple of 1/50s (i.e., 50 Hz), may cause electrical noise.")
-                return False
-
-        print(f"Valid ISIs: {self.ISIs}")
-        return True
     
     def get_user_input_respiratory_rate(self):
         while True:
@@ -334,20 +323,6 @@ class Experiment:
 
         return respiratory_rate
 
-    def adjust_ISI(self, ms_per_breath: float) -> bool:
-        """
-        Adjust ISI for block A and C based on respiratory rate in block B.
-        Returns True if ISIs are valid, False otherwise.
-        """
-        delta_ISI = self.ISI_adjustment_factor * ms_per_breath
-    
-        self.ISIs[0] = self.ISIs[1] - delta_ISI
-        self.ISIs[2] = self.ISIs[1] + delta_ISI
-
-        print(f"ISI for block A: {self.ISIs[0]}, ISI for block C: {self.ISIs[2]} after adjustment based on average length of one respiratory cycle {delta_ISI}")
-
-        return self.validate_ISI()
-
 
     def raise_and_lower_trigger(self, trigger):
         setParallelData(trigger)
@@ -361,31 +336,47 @@ class Experiment:
             return 1, self.trigger_mapping[f"response/{event_type.split('/')[-1]}/correct"]
         else:
             return 0, self.trigger_mapping[f"response/{event_type.split('/')[-1]}/incorrect"]
-        
-    def estimate_duration(self) -> float:
+
+
+    def estimate_duration(self, break_duration: float = 30.0) -> float:
         """
-        Estimate the total duration of the experiment in seconds, assuming all ISIs have a mean of ISI[1].
-        
-        Returns:
-            float: Estimated duration of the experiment in seconds.
+        Estimate the total duration of the experiment in seconds.
+        This calculation is based on the actual order of blocks (including breaks),
+        the number of sequences per block, and the ISI structure.
+
+        Parameters
+        ----------
+        break_duration : float
+            Estimated duration of breaks in seconds.
+
+        Returns
+        -------
+        float
+            Estimated duration of the experiment in seconds.
         """
-        mean_ISI = np.mean(self.ISIs)
-        n_events_per_sequence = 3 + 1  # 3 salient stimuli + 1 target stimulus per sequence
-        total_events = n_events_per_sequence * (self.n_sequences * len([block for block in self.order if block != "break"]))
+        total_duration = 0.0
         
-        # Total time is events * ISI + trigger durations
-        total_duration = (total_events * mean_ISI) 
-        
+        for block in self.order:
+            if block == "break":
+                # give an arbitrary pause duration for breaks (e.g. 60 s)
+                total_duration += break_duration
+                continue
+
+            ISI = self.ISIs[block]
+            n_events_per_sequence = 3 + 1  # 3 salient + 1 target per sequence
+            n_events = n_events_per_sequence * self.n_sequences
+            
+            total_duration += n_events * ISI
+
         return total_duration
     
+
     def run(self):
 
         # NOTE! WRITE TO LOG FILE IN THE BREAKS?
 
         self.listener.start_listener()  # Start the keyboard listener
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
-
-        self.start_time = time.perf_counter()
        
         with open(self.logfile, 'w') as log_file:
             log_file.write(self.LOG_HEADER)
