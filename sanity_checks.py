@@ -16,13 +16,17 @@ def plot_intensity(df):
     ax1.scatter(incorrect["time"], incorrect["intensity"], c="red", label="Incorrect response", s=7)
 
     # target/weak events
-    df_weak = df[(df["event_type"] == "target/left") | (df["event_type"] == "target/right")]
+    df_weak = df[(df["event_type"] == "target/middle") | (df["event_type"] == "target/index")]
     ax1.plot(df_weak["time"], df_weak["intensity"], c="k", alpha=0.7, linewidth=1)
 
     ax1.set_ylabel("Stimuli intensity")
     ax1.set_xlabel("Time (S)")
-    ax1.legend(loc="upper left")
 
+    QUEST_reset_times = df[df["QUEST_reset"]]
+    for idx, row in QUEST_reset_times.iterrows():
+        ax1.axvline(row["time"], color="darkblue", linestyle="dashed", label="QUEST reset")
+    ax1.legend(loc="upper left")
+    
     # secondary y-axis: ISI
     ax2 = ax1.twinx()
     ax2.plot(df_weak["time"], df_weak["ISI"], c="gray", alpha=0.7, linewidth=1, linestyle="--")
@@ -38,19 +42,18 @@ def check_timing(df):
     for diff in df["time_diff"]:
         ax.axvline(diff, alpha = 0.1, linewidth = 0.2)
 
-    ax.set_xlim((0, 1.5))
 
     plt.savefig("fig/timing.png")
 
 
 if __name__ == "__main__":
-    filename = Path("output/test_SGC.csv")
+    filename = Path("output/abc_behavioural_data_6.csv")
     df = pd.read_csv(filename)
-
+    
     plot_intensity(df)
 
     # Filter relevant event types and make a copy to avoid SettingWithCopyWarning
-    df_check_timing = df[df["event_type"].isin(["stim/salient", "target/left", "target/right"])].copy()
+    df_check_timing = df[df["event_type"].isin(["stim/salient", "target/middle", "target/index"])].copy()
 
     # Loop over blocks and compute time differences
     for block in df_check_timing["block"].unique():
