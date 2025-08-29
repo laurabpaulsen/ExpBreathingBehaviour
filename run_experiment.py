@@ -22,9 +22,9 @@ from utils.triggers import create_trigger_mapping
 # CONFIG
 # -------------------
 N_REPEATS_BLOCKS = 4
-N_SEQUENCE_BLOCKS = 6
-RESET_QUEST = 8 # reset QUEST every x blocks
-ISIS = [1.21, 1.34, 1.58, 1.82, 2.02] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
+N_SEQUENCE_BLOCKS = 10
+RESET_QUEST = 4 #6 # reset QUEST every x blocks
+ISIS = [1.21, 1.44, 1.57, 1.72] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
 VALID_INTENSITIES = np.arange(1.0, 10.1, 0.1).round(1).tolist()
 
 OUTPUT_PATH = Path(__file__).parent / "output"
@@ -177,7 +177,6 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
             reset_QUEST: Union[int, bool] = False, # how many blocks before resetting QUEST
             QUEST_plus: bool = True,
             send_trigger: bool = False,
-            ISI_adjustment_factor: float = 0.1,
             logfile: Path = Path("data.csv"),
             SGC_connectors = None,
             break_sound_path=None
@@ -197,7 +196,6 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
             reset_QUEST = reset_QUEST,
             QUEST_plus = QUEST_plus,
             send_trigger = send_trigger,
-            ISI_adjustment_factor = ISI_adjustment_factor,
             logfile = logfile,
             break_sound_path = break_sound_path
         )
@@ -221,7 +219,12 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
             if "target" in next_event_type:
                 self.SGC_connectors[next_event_type.split("/")[-1]].change_intensity(self.intensities["weak"])
 
-    
+    def trial_block(self, ISI=1.5, n_sequences=N_SEQUENCE_BLOCKS):
+        trial_sequence_events = self.event_sequence(n_sequences=n_sequences, ISI=ISI, block_idx="trial", reset_QUEST=None)
+        
+        self.listener.start_listener()  # Start the keyboard listener
+        self.loop_over_events(trial_sequence_events, log_file=None)
+        self.listener.stop_listener()  # Stop the keyboard listener
 
 
 
@@ -257,13 +260,17 @@ if __name__ == "__main__":
         connector.change_intensity(start_intensities["salient"])
 
     block_types = list(range(len(ISIS)))  # one block type per ISI
+    print(block_types)
     wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
     order = []
-
+    
     starting_block = block_types.copy()
 
     for i in range(N_REPEATS_BLOCKS):
-        start_block = random.choice(starting_block)
+        try:
+            start_block = random.choice(starting_block)
+        except IndexError:
+            starting_block = block_types.copy()
         starting_block.remove(start_block)
 
         tmp_order = build_block_order(
@@ -289,7 +296,9 @@ if __name__ == "__main__":
     )
 
     print_experiment_information(experiment)
-    experiment.check_in_on_participant()
+    experiment.check_in_on_participant(message="Ready to begin practice block.")
+    experiment.trial_block(ISI=1.4, n_sequences=10) # practice block
+    experiment.check_in_on_participant(message="Ready to begin main experiment.")
     experiment.run()
 
 
