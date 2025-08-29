@@ -170,8 +170,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+output/*
 
-output_a/*
-output_b/*
 
 .DS_Store
