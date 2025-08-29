@@ -25,6 +25,7 @@ def raise_and_lower_trigger(trigger, duration=0.001):
 
 for i in range(1, 6):
     for description, trig_val in trigger_mapping.items():
+        print(description, trig_val)
         countdown_timer.reset(0.5)
         while not countdown_timer.getTime() > 0:
             pass
