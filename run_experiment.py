@@ -37,8 +37,8 @@ if os.name == "posix":
     middle_connector_port = "/dev/tty.usbserial-A50027ER"
 else:
     # Windows
-    index_connector_port = "COM6"
-    middle_connector_port = "COM7"
+    index_connector_port = "COM2"
+    middle_connector_port = "COM3"
 
 
 # UTILITIES
