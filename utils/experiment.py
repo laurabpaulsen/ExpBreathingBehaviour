@@ -302,11 +302,11 @@ class Experiment:
                         self.QUEST.addResponse(correct, intensity=intensity)
                         self.update_weak_intensity()
 
-            if ("target" in event_type) and (not response_given):
-                print("No response given")
-                # Update QUEST with the guessed outcome and advance intensity
-                self.QUEST.addResponse(np.random.choice([0, 1]), intensity=intensity)
-                self.update_weak_intensity()
+            #if ("target" in event_type) and (not response_given):
+            #    print("No response given")
+            #    # Update QUEST with the guessed outcome and advance intensity
+            #    self.QUEST.addResponse(np.random.choice([0, 1]), intensity=intensity)
+            #    self.update_weak_intensity()
 
             # stop listening for responses
             self.listener.active = False
