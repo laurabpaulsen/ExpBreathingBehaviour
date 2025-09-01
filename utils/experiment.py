@@ -302,6 +302,12 @@ class Experiment:
                         self.QUEST.addResponse(correct, intensity=intensity)
                         self.update_weak_intensity()
 
+            if ("target" in event_type) and (not response_given):
+                print("No response given")
+                # Update QUEST with the guessed outcome and advance intensity
+                self.QUEST.addResponse(np.random.choice([0, 1]), intensity=intensity)
+                self.update_weak_intensity()
+
             # stop listening for responses
             self.listener.active = False
 
@@ -372,20 +378,11 @@ class Experiment:
     
 
     def run(self):
-
-        # NOTE! WRITE TO LOG FILE IN THE BREAKS?
-
         self.listener.start_listener()  # Start the keyboard listener
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
        
         with open(self.logfile, 'w') as log_file:
             log_file.write(self.LOG_HEADER)
-            
-            # determine the respiratory rate during block 
-            #self.determine_respiratory_rate(log_file)
-
-            # run the experiment
-            #self.setup_experiment()
             self.loop_over_events(self.events, log_file)
 
         self.listener.stop_listener()  # Stop the keyboard listener
