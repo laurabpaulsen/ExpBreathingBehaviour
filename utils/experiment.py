@@ -11,7 +11,7 @@ from utils.responses import KeyboardListener
 from utils.triggers import setParallelData
 
 class Experiment:
-    LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset\n"
+    LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset,rt\n"
 
     def __init__(
             self, 
@@ -235,24 +235,27 @@ class Experiment:
                 continue
             
             event_type = trial["event_type"]
+            trigger = self.trigger_mapping[event_type]
 
             intensity = self.intensities["salient"] if "salient" in event_type else self.intensities["weak"]
 
             if self.send_trigger:
-                self.raise_and_lower_trigger(self.trigger_mapping[event_type])  # Send trigger
+                self.raise_and_lower_trigger(trigger)  # Send trigger
+            
             # deliver pulse
             self.deliver_stimulus(event_type)
             
-            event_time = time.perf_counter() - self.start_time
+            stim_time = time.perf_counter() - self.start_time
             
             if log_file:
                 self.log_event(
                     **trial,
-                    event_time=event_time,
+                    event_time=stim_time,
                     intensity=intensity,
-                    trigger=self.trigger_mapping[event_type],
-                correct="NA",
-                log_file = log_file
+                    rt="NA",
+                    trigger=trigger,
+                    correct="NA",
+                    log_file=log_file
                 )
             
             print(f"Event: {event_type}, intensity: {intensity}")
@@ -260,7 +263,7 @@ class Experiment:
             # Check if this is a target event
             self.listener.active = "target" in event_type
 
-            target_time = event_time + trial["ISI"] + self.start_time
+            target_time = stim_time + trial["ISI"]
             response_given = False # to keep track of whether a response has been given
 
             try: 
@@ -276,14 +279,20 @@ class Experiment:
             if trial["reset_QUEST"]:
                 self.QUEST_reset()
 
-            while time.perf_counter() < target_time:
+            while (time.perf_counter() - self.start_time) < target_time:
                 # check for key press during target window
                 if self.listener.active and not response_given:
+                    rt = "NA"
                     key = self.listener.get_response()
                     if key:
                         correct, response_trigger = self.correct_or_incorrect(key, event_type)
+                        time_of_response = (time.perf_counter() - self.start_time)
+
                         print(f"Response: {key}, Correct: {correct}")
-                        self.raise_and_lower_trigger(response_trigger) 
+                        if self.send_trigger:
+                            self.raise_and_lower_trigger(response_trigger)
+
+                        rt = time_of_response - stim_time
                         response_given = True
                         
                         # overwrite event type for logging
@@ -291,10 +300,11 @@ class Experiment:
                         if log_file:
                             self.log_event(
                                 **trial,
-                                event_time=time.perf_counter() - self.start_time, 
-                                intensity=intensity, 
-                                trigger=response_trigger, 
-                                correct=correct, 
+                                event_time=time_of_response,
+                                intensity="NA",
+                                trigger=response_trigger,
+                                correct=correct,
+                                rt=rt,
                                 log_file=log_file
                             )
                         self.listener.active = False
@@ -312,8 +322,8 @@ class Experiment:
             self.listener.active = False
 
 
-    def log_event(self, event_time, block, ISI, intensity, event_type, trigger, n_in_block, correct, reset_QUEST, log_file):
-        log_file.write(f"{event_time},{block},{ISI},{intensity},{event_type},{trigger},{n_in_block},{correct},{reset_QUEST}\n")
+    def log_event(self, event_time, block, ISI, intensity, event_type, trigger, n_in_block, correct, reset_QUEST, rt, log_file):
+        log_file.write(f"{event_time},{block},{ISI},{intensity},{event_type},{trigger},{n_in_block},{correct},{reset_QUEST},{rt}\n")
     
     
     def get_user_input_respiratory_rate(self):

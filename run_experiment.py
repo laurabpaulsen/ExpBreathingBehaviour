@@ -234,7 +234,6 @@ if __name__ == "__main__":
 
     # Setup logfile based on participant ID
     logfile = OUTPUT_PATH / f"{participant_id}_behavioural_data.csv"
-    
 
     # check if it already exists
     if logfile.exists():
@@ -248,7 +247,7 @@ if __name__ == "__main__":
     connectors = {
         "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
         "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        #"middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
         #"index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
@@ -260,7 +259,6 @@ if __name__ == "__main__":
         connector.change_intensity(start_intensities["salient"])
 
     block_types = list(range(len(ISIS)))  # one block type per ISI
-    print(block_types)
     wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
     order = []
     
@@ -288,7 +286,7 @@ if __name__ == "__main__":
         reset_QUEST=RESET_QUEST, # reset QUEST every x blocks
         ISIs=ISIS,
         trigger_mapping=create_trigger_mapping(),
-        send_trigger=True,
+        send_trigger=False, # after running the trial block it is set to True
         logfile = logfile,
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
@@ -298,6 +296,7 @@ if __name__ == "__main__":
     print_experiment_information(experiment)
     experiment.check_in_on_participant(message="Ready to begin practice block.")
     experiment.trial_block(ISI=1.4, n_sequences=10) # practice block
+    experiment.send_trigger = True
     experiment.check_in_on_participant(message="Ready to begin main experiment.")
     experiment.run()
 
