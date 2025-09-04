@@ -5,6 +5,7 @@ from typing import Union, List
 import time
 
 from psychopy.clock import CountdownTimer
+from psychopy import core
 from psychopy.data import QuestPlusHandler, QuestHandler
 
 from utils.responses import KeyboardListener
@@ -340,11 +341,16 @@ class Experiment:
         return respiratory_rate
 
 
-    def raise_and_lower_trigger(self, trigger):
+    def raise_and_lower_trigger_old(self, trigger):
         setParallelData(trigger)
         self.countdown_timer.reset(self.trigger_duration)
         while self.countdown_timer.getTime() > 0:
             pass
+        setParallelData(0)
+
+    def raise_and_lower_trigger(self, trigger):
+        setParallelData(trigger)
+        core.wait(self.trigger_duration, hogCPUperiod=min(self.trigger_duration, 0.01))
         setParallelData(0)
     
     def correct_or_incorrect(self, key, event_type):

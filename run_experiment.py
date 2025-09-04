@@ -286,6 +286,7 @@ if __name__ == "__main__":
         reset_QUEST=RESET_QUEST, # reset QUEST every x blocks
         ISIs=ISIS,
         trigger_mapping=create_trigger_mapping(),
+        trigger_duration=0.005,
         send_trigger=False, # after running the trial block it is set to True
         logfile = logfile,
         SGC_connectors=connectors,
