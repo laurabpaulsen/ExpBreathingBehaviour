@@ -23,7 +23,7 @@ from utils.triggers import create_trigger_mapping
 # -------------------
 N_REPEATS_BLOCKS = 4
 N_SEQUENCE_BLOCKS = 10
-RESET_QUEST = 4 #6 # reset QUEST every x blocks
+RESET_QUEST = 3 # how many blocks before resetting QUEST
 ISIS = [1.21, 1.44, 1.57, 1.72] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
 VALID_INTENSITIES = np.arange(1.0, 10.1, 0.1).round(1).tolist()
 
