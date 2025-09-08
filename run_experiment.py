@@ -137,7 +137,7 @@ def print_experiment_information(experiment):
 
     print("\nTransition counts:")
     for (a, b), count in transition_counts.items():
-        print(f"  ({a} → {b}): {count}")
+        print(f"  ({a} -> {b}): {count}")
 
 def get_participant_info_gui():
     # Default values
