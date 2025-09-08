@@ -18,6 +18,9 @@ from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
 from utils.triggers import create_trigger_mapping
 
+# print version of python
+import sys
+print(f"Python version: {sys.version}")
 
 # CONFIG
 # -------------------
