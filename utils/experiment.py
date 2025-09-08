@@ -11,6 +11,9 @@ from psychopy.data import QuestPlusHandler, QuestHandler
 from utils.responses import KeyboardListener
 from utils.triggers import setParallelData
 
+import os
+
+
 class Experiment:
     LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset,rt\n"
 
@@ -94,12 +97,12 @@ class Experiment:
         self.target_2 = target_2
 
         # for response handling 
-        self.listener = KeyboardListener()
+        self.response_handler = ResponseHandler()
         self.keys_target = {
             target_1: ['2', 'y'],
             target_2: ['1', 'b']
         }
-        
+    
         
         # QUEST parameters
         self.intensities =  intensities 
@@ -262,7 +265,8 @@ class Experiment:
             print(f"Event: {event_type}, intensity: {intensity}")
 
             # Check if this is a target event
-            self.listener.active = "target" in event_type
+            if "target" in event_type:
+                self.response_handler.enable()
 
             target_time = stim_time + trial["ISI"]
             response_given = False # to keep track of whether a response has been given
@@ -282,9 +286,11 @@ class Experiment:
 
             while (time.perf_counter() - self.start_time) < target_time:
                 # check for key press during target window
-                if self.listener.active and not response_given:
+                if self.response_handler.active and not response_given:
                     rt = "NA"
-                    key = self.listener.get_response()
+                    key = self.response_handler.get_response(
+                        valid_keys=self.keys_target[self.target_1] + self.keys_target[self.target_2]
+                    )
                     if key:
                         correct, response_trigger = self.correct_or_incorrect(key, event_type)
                         time_of_response = (time.perf_counter() - self.start_time)
@@ -308,7 +314,7 @@ class Experiment:
                                 rt=rt,
                                 log_file=log_file
                             )
-                        self.listener.active = False
+                        self.response_handler.disable()
 
                         self.QUEST.addResponse(correct, intensity=intensity)
                         self.update_weak_intensity()
@@ -320,7 +326,7 @@ class Experiment:
                 self.update_weak_intensity()
 
             # stop listening for responses
-            self.listener.active = False
+            self.response_handler.disable()
 
 
     def log_event(self, event_time, block, ISI, intensity, event_type, trigger, n_in_block, correct, reset_QUEST, rt, log_file):
@@ -394,11 +400,73 @@ class Experiment:
     
 
     def run(self):
-        self.listener.start_listener()  # Start the keyboard listener
+        self.response_handler.start() # Start the keyboard listener
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
        
         with open(self.logfile, 'w') as log_file:
             log_file.write(self.LOG_HEADER)
             self.loop_over_events(self.events, log_file)
 
-        self.listener.stop_listener()  # Stop the keyboard listener
+        self.response_handler.stop() # Stop the keyboard listener
+
+
+
+# Try to import the new Keyboard
+try:
+    from psychopy.hardware import keyboard
+    PSYCHOPY_KEYBOARD_AVAILABLE = True
+except ImportError:
+    PSYCHOPY_KEYBOARD_AVAILABLE = False
+
+
+class ResponseHandler:
+    def __init__(self):
+        self.active = False
+
+        if os.name == "posix":  # macOS
+            # Use your old listener on Mac
+            from utils.responses import KeyboardListener
+            self.listener = KeyboardListener()
+            self.use_psychopy = False
+            print("Using old KeyboardListener (macOS fallback).")
+        elif PSYCHOPY_KEYBOARD_AVAILABLE:
+            self.kb = keyboard.Keyboard()
+            self.use_psychopy = True
+            print("Using psychopy.hardware.keyboard.Keyboard.")
+        else:
+            # If neither is available, crash gracefully
+            raise RuntimeError("No valid keyboard backend available.")
+
+    def start(self):
+        if not self.use_psychopy:
+            self.listener.start_listener()
+
+    def stop(self):
+        if not self.use_psychopy:
+            self.listener.stop_listener()
+
+    def enable(self):
+        self.active = True
+
+    def disable(self):
+        self.active = False
+
+    def get_response(self, valid_keys=None):
+        if not self.active:
+            return None, None
+
+        if self.use_psychopy:
+            keys = self.kb.getKeys(keyList=valid_keys, waitRelease=False)
+            if keys:
+                k = keys[-1]
+                return k.name, k.rt
+            else:
+                return None, None
+        else:
+            key = None
+            while self.active and key is None:
+                key = self.listener.get_response()
+                core.wait(0.001)  # tiny delay
+            if key:
+                return key, time.perf_counter()
+            return None, None

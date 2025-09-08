@@ -22,9 +22,9 @@ from utils.triggers import create_trigger_mapping
 # CONFIG
 # -------------------
 N_REPEATS_BLOCKS = 4
-N_SEQUENCE_BLOCKS = 10
-RESET_QUEST = 3 # how many blocks before resetting QUEST
-ISIS = [1.21, 1.44, 1.57, 1.72] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
+N_SEQUENCE_BLOCKS = 9
+RESET_QUEST = 2 # how many blocks before resetting QUEST
+ISIS = [1.29, 1.44, 1.57, 1.72] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
 VALID_INTENSITIES = np.arange(1.0, 10.1, 0.1).round(1).tolist()
 
 OUTPUT_PATH = Path(__file__).parent / "output"
@@ -222,9 +222,10 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
     def trial_block(self, ISI=1.5, n_sequences=N_SEQUENCE_BLOCKS):
         trial_sequence_events = self.event_sequence(n_sequences=n_sequences, ISI=ISI, block_idx="trial", reset_QUEST=None)
         
-        self.listener.start_listener()  # Start the keyboard listener
+        self.response_handler.start()  # Start the keyboard listener
+        self.response_handler.enable()  # Enable response handling
         self.loop_over_events(trial_sequence_events, log_file=None)
-        self.listener.stop_listener()  # Stop the keyboard listener
+        self.response_handler.stop()  # Stop the keyboard listener
 
 
 
@@ -245,10 +246,10 @@ if __name__ == "__main__":
     print(f"Behavioural data will be saved to: {logfile}")
 
     connectors = {
-        "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
+        #"middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        #"index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
     # wait 2 seconds
@@ -294,12 +295,18 @@ if __name__ == "__main__":
         break_sound_path=None #Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
     )
 
+
+    start_time = time.time()
     print_experiment_information(experiment)
     experiment.check_in_on_participant(message="Ready to begin practice block.")
-    experiment.trial_block(ISI=1.4, n_sequences=10) # practice block
+    #experiment.trial_block(ISI=1.5, n_sequences=10) # practice block
     experiment.send_trigger = True
     experiment.check_in_on_participant(message="Ready to begin main experiment.")
     experiment.run()
+
+    end_time = time.time()
+    total_duration = end_time - start_time
+    print(f"Experiment completed in {total_duration/60:.2f} minutes.")
 
 
 
