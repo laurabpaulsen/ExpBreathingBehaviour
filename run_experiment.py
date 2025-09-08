@@ -330,7 +330,7 @@ if __name__ == "__main__":
 
     print_experiment_information(experiment)
     experiment.check_in_on_participant(message="Ready to begin practice block.")
-    experiment.trial_block(ISI=1.4, n_sequences=10) # practice block
+    experiment.trial_block(ISI=1.5, n_sequences=10) # practice block
     experiment.send_trigger = True
     experiment.check_in_on_participant(message="Ready to begin main experiment.")
     experiment.run()
