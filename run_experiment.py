@@ -16,6 +16,7 @@ import random
 import os
 import numpy as np
 
+from psychopy import gui
 # local imports
 from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
@@ -138,6 +139,34 @@ def print_experiment_information(experiment):
     for (a, b), count in transition_counts.items():
         print(f"  ({a} → {b}): {count}")
 
+def get_participant_info_gui():
+    # Default values
+    default_salient = 6.0
+
+    # Create a dictionary for the dialog
+    info = {"Participant ID": "", "Salient intensity (1.0–10.0)": default_salient}
+
+    dlg = gui.DlgFromDict(dictionary=info, title="Participant Information")
+    if not dlg.OK:
+        print("Experiment setup cancelled.")
+        exit()
+
+    pid = info["Participant ID"].strip()
+    salient = float(info["Salient intensity (1.0–10.0)"])
+    
+    # Check that salient intensity is valid
+    if salient not in VALID_INTENSITIES:
+        gui.alert("Salient intensity must be between 1.0–10.0 in steps of 0.1.")
+        exit()
+
+    weak = np.round(salient / 2, 1)
+    if weak not in VALID_INTENSITIES:
+        gui.alert(f"Weak intensity {weak} is invalid. Adjust salient value.")
+        exit()
+
+    return pid, {"salient": salient, "weak": weak}
+
+
 def get_participant_info():
     pid = input("Enter participant ID: ").strip()
 
@@ -235,7 +264,7 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
 
 if __name__ == "__main__":
     # --- Collect participant info ---
-    participant_id, start_intensities = get_participant_info()
+    participant_id, start_intensities = get_participant_info_gui()
 
     # Setup logfile based on participant ID
     logfile = OUTPUT_PATH / f"{participant_id}_behavioural_data.csv"
