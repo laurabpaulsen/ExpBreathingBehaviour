@@ -5,6 +5,9 @@ VERSION B - discriminating weak index and ring finger targets following three sa
 To run on stim PC at COBE lab run `python3.8 run_experiment.py` from the command prompt
 
 """
+
+import sys
+print(f"Python version: {sys.version}")
 import time
 from pathlib import Path
 from typing import Union,List, Tuple, Optional
@@ -19,8 +22,7 @@ from utils.SGC_connector import SGCConnector, SGCFakeConnector
 from utils.triggers import create_trigger_mapping
 
 # print version of python
-import sys
-print(f"Python version: {sys.version}")
+
 
 # CONFIG
 # -------------------
