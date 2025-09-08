@@ -10,7 +10,7 @@ from psychopy.data import QuestPlusHandler, QuestHandler
 
 from utils.responses import KeyboardListener
 from utils.triggers import setParallelData
-
+from winsound import PlaySound, SND_FILENAME
 class Experiment:
     LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset,rt\n"
 
@@ -110,9 +110,7 @@ class Experiment:
         self.QUEST_n_resets = 0
         self.QUEST_reset()
         self.break_sound_path = break_sound_path
-        if self.break_sound_path:
-            from winsound import PlaySound
-            #from playsound import playsound
+
 
 
         self.start_time = time.perf_counter()
@@ -120,7 +118,7 @@ class Experiment:
     def play_break_sound(self):
         # Play a sound to indicate a break
         if self.break_sound_path:
-            PlaySound(str(self.break_sound_path))
+            PlaySound(str(self.break_sound_path), SND_FILENAME)
 
     def setup_experiment(self):
         for block_idx, block in enumerate(self.order):
