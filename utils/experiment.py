@@ -111,7 +111,8 @@ class Experiment:
         self.QUEST_reset()
         self.break_sound_path = break_sound_path
         if self.break_sound_path:
-            from playsound import playsound
+            from winsound import PlaySound
+            #from playsound import playsound
 
 
         self.start_time = time.perf_counter()
@@ -119,7 +120,7 @@ class Experiment:
     def play_break_sound(self):
         # Play a sound to indicate a break
         if self.break_sound_path:
-            playsound(str(self.break_sound_path))
+            PlaySound(str(self.break_sound_path))
 
     def setup_experiment(self):
         for block_idx, block in enumerate(self.order):

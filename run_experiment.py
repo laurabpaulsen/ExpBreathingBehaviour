@@ -325,7 +325,7 @@ if __name__ == "__main__":
         logfile = logfile,
         SGC_connectors=connectors,
         prop_middle_index=[1/2, 1/2],
-        break_sound_path=None #Path("/Users/au661930/Library/CloudStorage/OneDrive-Aarhusuniversitet/Dokumenter/projects/_BehaviouralBreathing/code/ExpBreathingBehaviour/utils/sound.wav")
+        break_sound_path=Path("utils/sound.wav")
     )
 
     print_experiment_information(experiment)
