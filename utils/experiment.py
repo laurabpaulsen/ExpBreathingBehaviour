@@ -211,6 +211,10 @@ class Experiment:
         Update the weak intensity based on the QUEST procedure!
         """
         proposed_intensity = self.QUEST.next()
+    
+        # make sure the intensity is not higher than the max allowed
+        proposed_intensity = max(1.0, min(proposed_intensity, self.max_intensity_weak))
+
         self.intensities["weak"] = round(proposed_intensity, 1)
 
     def deliver_stimulus(self, event_type):
