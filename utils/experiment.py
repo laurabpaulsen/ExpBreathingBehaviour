@@ -223,6 +223,7 @@ class Experiment:
         raise NotImplementedError("Subclasses should implement this!")
 
     def check_in_on_participant(self, message: str = "Check in on the participant."):
+        self.play_break_sound()
         input(message + " Press Enter to continue...")
         time.sleep(2)
 
@@ -233,8 +234,6 @@ class Experiment:
         """
         for i, trial in enumerate(events):
             if trial == "break":
-                # play wav sound to alert participant and experimenter
-                self.play_break_sound()
                 self.check_in_on_participant()
                 continue
             
