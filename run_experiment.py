@@ -264,7 +264,7 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
 
 if __name__ == "__main__":
     # --- Collect participant info ---
-    participant_id, start_intensities = get_participant_info_gui()
+    participant_id, start_intensities = get_participant_info()
 
     # Setup logfile based on participant ID
     logfile = OUTPUT_PATH / f"{participant_id}_behavioural_data.csv"
