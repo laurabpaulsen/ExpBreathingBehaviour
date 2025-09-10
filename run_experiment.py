@@ -299,7 +299,7 @@ if __name__ == "__main__":
     
     starting_block = block_types.copy()
 
-    for i in range(N_REPEATS_BLOCKS):
+    for i in range(N_REPEATS_BLOCKS+1):
         try:
             start_block = random.choice(starting_block)
         except IndexError:
@@ -310,7 +310,8 @@ if __name__ == "__main__":
             wanted_transitions, 
             start_blocks=[start_block])
         order.extend(tmp_order)
-        order.append("break")
+        if not i == N_REPEATS_BLOCKS:
+            order.append("break")
 
     
     experiment = MiddleIndexTactileDiscriminationTask(

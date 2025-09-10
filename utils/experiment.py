@@ -197,7 +197,7 @@ class Experiment:
 
         # update the quest start val to the previous weak intensity
         if self.QUEST_n_resets > 0:
-            self.QUEST_start_val = self.QUEST.mean()
+            self.QUEST_start_val = min(self.QUEST.mean(), self.max_intensity_weak)
             print(f"QUEST start value updated to: {self.QUEST_start_val}")
         self.QUEST = self.make_QUEST_handler()
 
