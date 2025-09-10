@@ -299,7 +299,7 @@ if __name__ == "__main__":
     
     starting_block = block_types.copy()
 
-    for i in range(N_REPEATS_BLOCKS+1):
+    for i in range(N_REPEATS_BLOCKS):
         try:
             start_block = random.choice(starting_block)
         except IndexError:
