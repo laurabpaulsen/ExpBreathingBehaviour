@@ -124,6 +124,7 @@ class Experiment:
         for block_idx, block in enumerate(self.order):
             if block == "break":
                 self.events.append("break")
+
             else:
                 ISI = self.ISIs[block]
 
@@ -223,8 +224,13 @@ class Experiment:
         raise NotImplementedError("Subclasses should implement this!")
 
     def check_in_on_participant(self, message: str = "Check in on the participant."):
+        if self.send_trigger:
+            self.raise_and_lower_trigger(self.trigger_mapping["break/start"])
         self.play_break_sound()
         input(message + " Press Enter to continue...")
+        if self.send_trigger:
+            self.raise_and_lower_trigger(self.trigger_mapping["break/end"])
+
         time.sleep(2)
 
 

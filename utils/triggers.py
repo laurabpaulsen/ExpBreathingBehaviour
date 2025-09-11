@@ -23,7 +23,6 @@ else:
     setParallelData = port.setData
 
 
-
 def create_trigger_mapping(
         stim = 1,
         target = 2,
@@ -40,7 +39,9 @@ def create_trigger_mapping(
         "response/index/correct": response + index + correct,
         "response/middle/incorrect": response + middle + incorrect,
         "response/middle/correct": response + middle + correct,
-        "response/index/incorrect": response + index + incorrect, 
+        "response/index/incorrect": response + index + incorrect,
+        "break/start": 128,
+        "break/end": 129
         }
 
     return trigger_mapping
