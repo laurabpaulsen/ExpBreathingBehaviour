@@ -41,7 +41,9 @@ def create_trigger_mapping(
         "response/middle/correct": response + middle + correct,
         "response/index/incorrect": response + index + incorrect,
         "break/start": 128,
-        "break/end": 129
+        "break/end": 129,
+        "experiment/start": 254,
+        "experiment/end": 255
         }
 
     return trigger_mapping
