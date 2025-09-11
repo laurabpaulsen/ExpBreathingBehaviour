@@ -222,17 +222,45 @@ class Experiment:
 
     def prepare_for_next_stimulus(self, event_type, next_event_type):
         raise NotImplementedError("Subclasses should implement this!")
-
-    def check_in_on_participant(self, message: str = "Check in on the participant."):
+    
+    def check_in_on_participant(self, message: str = "Check in on the participant.", log_file=None):
         if self.send_trigger:
             self.raise_and_lower_trigger(self.trigger_mapping["break/start"])
+            # also log the event¨
+            if log_file:
+                self.log_event(
+                    event_time=time.perf_counter() - self.start_time,
+                    block="break",
+                    ISI="NA",
+                    intensity="NA",
+                    event_type="break",
+                    trigger=self.trigger_mapping["break/start"],
+                    n_in_block="NA",
+                    correct="NA",
+                    reset_QUEST=False,
+                    rt="NA",
+                    log_file=log_file
+                )
+
         self.play_break_sound()
         input(message + " Press Enter to continue...")
         if self.send_trigger:
             self.raise_and_lower_trigger(self.trigger_mapping["break/end"])
-
+            if log_file:
+                self.log_event(
+                    event_time=time.perf_counter() - self.start_time,
+                    block="break",
+                    ISI="NA",
+                    intensity="NA",
+                    event_type="break/end",
+                    trigger=self.trigger_mapping["break/end"],
+                    n_in_block="NA",
+                    correct="NA",
+                    reset_QUEST=False,
+                    rt="NA",
+                    log_file=log_file
+                )
         time.sleep(2)
-
 
     def loop_over_events(self, events: List[dict], log_file):
         """
@@ -240,7 +268,7 @@ class Experiment:
         """
         for i, trial in enumerate(events):
             if trial == "break":
-                self.check_in_on_participant()
+                self.check_in_on_participant(log_file=log_file)
                 continue
             
             event_type = trial["event_type"]
@@ -401,12 +429,13 @@ class Experiment:
         return total_duration
     
 
-    def run(self):
+    def run(self, write_header: bool = True):
         self.listener.start_listener()  # Start the keyboard listener
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
        
         with open(self.logfile, 'w') as log_file:
-            log_file.write(self.LOG_HEADER)
+            if write_header:
+                log_file.write(self.LOG_HEADER)
             self.loop_over_events(self.events, log_file)
 
         self.listener.stop_listener()  # Stop the keyboard listener
