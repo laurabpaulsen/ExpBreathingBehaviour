@@ -121,6 +121,7 @@ class Experiment:
             PlaySound(str(self.break_sound_path), SND_FILENAME)
 
     def setup_experiment(self):
+        logged_block_idx = 0
         for block_idx, block in enumerate(self.order):
             if block == "break":
                 self.events.append("break")
@@ -133,8 +134,9 @@ class Experiment:
                     reset = int( self.n_sequences/2) # approximately halfway through the block
                 else:
                     reset = False
-            
-                self.events.extend(self.event_sequence(self.n_sequences, ISI, block_idx, reset_QUEST=reset))
+
+                self.events.extend(self.event_sequence(self.n_sequences, ISI, logged_block_idx, reset_QUEST=reset))
+                logged_block_idx += 1
         
     def event_sequence(self, n_sequences, ISI, block_idx, n_salient=3, reset_QUEST: Union[int, None] = None) -> List[dict]:
         """
@@ -434,8 +436,44 @@ class Experiment:
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
        
         with open(self.logfile, 'w') as log_file:
+
+            if self.send_trigger:
+                self.raise_and_lower_trigger(self.trigger_mapping["experiment/start"])
+                if log_file:
+                    self.log_event(
+                        event_time=time.perf_counter() - self.start_time,
+                        block="experiment",
+                        ISI="NA",
+                        intensity="NA",
+                        event_type="experiment/start",
+                        trigger=self.trigger_mapping["experiment/start"],
+                        n_in_block="NA",
+                        correct="NA",
+                        reset_QUEST=False,
+                        rt="NA",
+                        log_file=log_file
+                    )
+
+
             if write_header:
                 log_file.write(self.LOG_HEADER)
             self.loop_over_events(self.events, log_file)
+
+            if self.send_trigger:
+                self.raise_and_lower_trigger(self.trigger_mapping["experiment/end"])
+                if log_file:
+                    self.log_event(
+                        event_time=time.perf_counter() - self.start_time,
+                        block="experiment",
+                        ISI="NA",
+                        intensity="NA",
+                        event_type="experiment/end",
+                        trigger=self.trigger_mapping["experiment/end"],
+                        n_in_block="NA",
+                        correct="NA",
+                        reset_QUEST=False,
+                        rt="NA",
+                        log_file=log_file
+                    )
 
         self.listener.stop_listener()  # Stop the keyboard listener
