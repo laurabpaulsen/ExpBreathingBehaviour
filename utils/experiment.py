@@ -10,7 +10,14 @@ from psychopy.data import QuestPlusHandler, QuestHandler
 
 from utils.responses import KeyboardListener
 from utils.triggers import setParallelData
-from winsound import PlaySound, SND_FILENAME
+
+import os
+if os.name != "posix":
+    from winsound import PlaySound, SND_FILENAME
+else:
+    SND_FILENAME = None
+    def PlaySound(*args, **kwargs):
+        pass
 class Experiment:
     LOG_HEADER = "time,block,ISI,intensity,event_type,trigger,n_in_block,correct,QUEST_reset,rt\n"
 
@@ -436,13 +443,15 @@ class Experiment:
         self.logfile.parent.mkdir(parents=True, exist_ok=True)  # Ensure log directory exists
        
         with open(self.logfile, 'w') as log_file:
+            if write_header:
+                log_file.write(self.LOG_HEADER)
 
             if self.send_trigger:
                 self.raise_and_lower_trigger(self.trigger_mapping["experiment/start"])
                 if log_file:
                     self.log_event(
                         event_time=time.perf_counter() - self.start_time,
-                        block="experiment",
+                        block="NA",
                         ISI="NA",
                         intensity="NA",
                         event_type="experiment/start",
@@ -455,8 +464,7 @@ class Experiment:
                     )
 
 
-            if write_header:
-                log_file.write(self.LOG_HEADER)
+            
             self.loop_over_events(self.events, log_file)
 
             if self.send_trigger:
