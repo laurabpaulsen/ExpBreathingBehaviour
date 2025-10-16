@@ -234,6 +234,40 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
         self.loop_over_events(trial_sequence_events, log_file=None)
         self.listener.stop_listener()  # Stop the keyboard listener
 
+def generate_block_order(ISIs: List[float], n_repeats: int) -> List[int]:
+    """
+    Generate a sequence of block indices and 'break' markers.
+
+    Parameters
+    ----------
+    ISIs : list of float
+        The list of ISIs defining block types.
+    n_repeats : int
+        How many times to repeat the full transition set.
+
+    Returns
+    -------
+    list
+        A list containing block indices and "break" entries.
+    """
+    block_types = list(range(len(ISIs)))
+    wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
+
+    order = []
+    available_start_blocks = block_types.copy()
+
+    for i in range(n_repeats):
+        if not available_start_blocks:
+            available_start_blocks = block_types.copy()
+        start_block = random.choice(available_start_blocks)
+        available_start_blocks.remove(start_block)
+
+        tmp_order = build_block_order(wanted_transitions, start_blocks=[start_block])
+        order.extend(tmp_order)
+        if i != n_repeats - 1:
+            order.append("break")
+
+    return order
 
 
 if __name__ == "__main__":
@@ -266,25 +300,8 @@ if __name__ == "__main__":
         connector.set_pulse_duration(STIM_DURATION)
         connector.change_intensity(start_intensities["salient"])
 
-    block_types = list(range(len(ISIS)))  # one block type per ISI
-    wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
-    order = []
-    
-    available_start_blocks = block_types.copy()
-
-    for i in range(N_REPEATS_BLOCKS):
-        try:
-            start_block = random.choice(available_start_blocks)
-        except IndexError:
-            available_start_blocks = block_types.copy()
-        available_start_blocks.remove(start_block)
-
-        tmp_order = build_block_order(
-            wanted_transitions, 
-            start_blocks=[start_block])
-        order.extend(tmp_order)
-        if i != N_REPEATS_BLOCKS-1:
-            order.append("break")
+    order = generate_block_order(ISIs=ISIS, n_repeats=N_REPEATS_BLOCKS)
+    print(f"Block order: {order}")
 
     
     experiment = MiddleIndexTactileDiscriminationTask(
