@@ -1,5 +1,5 @@
 """
-VERSION B - discriminating weak index and ring finger targets following three salient rhythm-establishing stimuli presented to both fingers
+VERSION B - discriminating weak index and middle finger targets following three salient rhythm-establishing stimuli presented to both fingers
 
 
 To run on stim PC at COBE lab run `python3.8 run_experiment.py` from the command prompt
@@ -16,7 +16,6 @@ import random
 import os
 import numpy as np
 
-from psychopy import gui
 # local imports
 from utils.experiment import Experiment
 from utils.SGC_connector import SGCConnector, SGCFakeConnector
@@ -112,11 +111,11 @@ def build_block_order(
 def print_experiment_information(experiment):
 
     duration = experiment.estimate_duration()
-    print(f"The experiment is estimated to last {duration/60} minutes")
+    print(f"Estimated total duration: {duration/60:.1f} minutes ({duration:.0f} seconds)")
     experiment.setup_experiment()
 
     # Extract event_type from each dictionary
-    event_types = [event['event_type'] for event in experiment.events if not event == "break"]
+    event_types = [e.get("event_type") for e in experiment.events if isinstance(e, dict)]
 
     # Count each event_type
     event_counts = Counter(event_types)
@@ -139,34 +138,6 @@ def print_experiment_information(experiment):
     print("\nTransition counts:")
     for (a, b), count in transition_counts.items():
         print(f"  ({a} -> {b}): {count}")
-
-def get_participant_info_gui():
-    # Default values
-    default_salient = 6.0
-
-    # Create a dictionary for the dialog
-    info = {"Participant ID": "", "Salient intensity (1.0–10.0)": default_salient}
-
-    dlg = gui.DlgFromDict(dictionary=info, title="Participant Information")
-    if not dlg.OK:
-        print("Experiment setup cancelled.")
-        exit()
-
-    pid = info["Participant ID"].strip()
-    salient = float(info["Salient intensity (1.0–10.0)"])
-    
-    # Check that salient intensity is valid
-    if salient not in VALID_INTENSITIES:
-        gui.alert("Salient intensity must be between 1.0–10.0 in steps of 0.1.")
-        exit()
-
-    weak = np.round(salient / 2, 1)
-    if weak not in VALID_INTENSITIES:
-        gui.alert(f"Weak intensity {weak} is invalid. Adjust salient value.")
-        exit()
-
-    return pid, {"salient": salient, "weak": weak}
-
 
 def get_participant_info():
     pid = input("Enter participant ID: ").strip()
@@ -254,7 +225,9 @@ class MiddleIndexTactileDiscriminationTask(Experiment):
             if "target" in next_event_type:
                 self.SGC_connectors[next_event_type.split("/")[-1]].change_intensity(self.intensities["weak"])
 
-    def trial_block(self, ISI=1.5, n_sequences=N_SEQUENCE_BLOCKS):
+    def trial_block(self, ISI=1.5, n_sequences=None):
+        n_sequences = n_sequences if n_sequences else self.n_sequences
+        # Generate the sequence of events for the trial block
         trial_sequence_events = self.event_sequence(n_sequences=n_sequences, ISI=ISI, block_idx="trial", reset_QUEST=None)
         
         self.listener.start_listener()  # Start the keyboard listener
@@ -297,20 +270,20 @@ if __name__ == "__main__":
     wanted_transitions = [(a, b) for a in block_types for b in block_types if a != b]
     order = []
     
-    starting_block = block_types.copy()
+    available_start_blocks = block_types.copy()
 
     for i in range(N_REPEATS_BLOCKS):
         try:
-            start_block = random.choice(starting_block)
+            start_block = random.choice(available_start_blocks)
         except IndexError:
-            starting_block = block_types.copy()
-        starting_block.remove(start_block)
+            available_start_blocks = block_types.copy()
+        available_start_blocks.remove(start_block)
 
         tmp_order = build_block_order(
             wanted_transitions, 
             start_blocks=[start_block])
         order.extend(tmp_order)
-        if not i == N_REPEATS_BLOCKS:
+        if i != N_REPEATS_BLOCKS-1:
             order.append("break")
 
     
