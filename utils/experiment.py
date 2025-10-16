@@ -31,7 +31,7 @@ class Experiment:
             target_1: str = "left",
             target_2: str = "right",
             intensities: dict = {"salient": 6.0, "weak": 2.0},
-            trigger_duration: float = 0.001,
+            trigger_duration: float = 0.005,
             send_trigger: bool = False,
             QUEST_target: float = 0.60,
             reset_QUEST: Union[int, bool] = False, # how many blocks before resetting QUEST
