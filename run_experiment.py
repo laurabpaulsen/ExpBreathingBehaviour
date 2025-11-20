@@ -327,7 +327,7 @@ if __name__ == "__main__":
     # possiblility to update intensities after practice
     while True:
         update = input("\nUpdate salient intensity? (y/n): ").strip().lower()
-        if update != "y":
+        if "y" not in update:
             break
 
         while True:
