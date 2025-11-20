@@ -29,7 +29,7 @@ from utils.triggers import create_trigger_mapping
 N_REPEATS_BLOCKS = 4 #4
 N_SEQUENCE_BLOCKS = 8
 RESET_QUEST = 2 # how many blocks before resetting QUEST
-ISIS = [1.29, 1.44, 1.57, 1.71] # !ISIS = [1.33, 1.41, 1.58, 1.82, 2.02]not a problem with these ISIs, could potentially add one a bit shorter! 
+ISIS = [1.29, 1.44, 1.57, 1.71] 
 VALID_INTENSITIES = np.arange(1.0, 10.1, 0.1).round(1).tolist()
 STIM_DURATION = 100  # 0.1 ms
 
@@ -287,10 +287,10 @@ if __name__ == "__main__":
     print(f"Behavioural data will be saved to: {logfile}")
 
     connectors = {
-        "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
+        #"middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        #"index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
     # wait 2 seconds
@@ -322,7 +322,35 @@ if __name__ == "__main__":
 
     print_experiment_information(experiment)
     experiment.check_in_on_participant(message="Ready to begin practice block.")
-    experiment.trial_block(ISI=1.5, n_sequences=10) # practice block
+    experiment.trial_block(ISI=1.5, n_sequences=12) # practice block
+
+    # possiblility to update intensities after practice
+    while True:
+        update = input("\nUpdate salient intensity? (y/n): ").strip().lower()
+        if update != "y":
+            break
+
+        while True:
+            try:
+                new_salient = float(input("Enter new salient intensity (1.0–10.0): "))
+                if new_salient not in VALID_INTENSITIES:
+                    raise ValueError
+                break
+            except ValueError:
+                print("❌ Invalid input. Enter a number between 1.0 and 10.0 in steps of 0.1.")
+
+        # apply to experiment
+        experiment.intensities["salient"] = new_salient
+
+        # push new values to the devices
+        for side, connector in experiment.SGC_connectors.items():
+            connector.change_intensity(new_salient)
+
+        # short trial block to confirm
+        experiment.check_in_on_participant(message="Ready to begin short confirmation block.")
+        experiment.trial_block(ISI=1.5, n_sequences=4)
+
+
     experiment.send_trigger = True
     experiment.check_in_on_participant(message="Ready to begin main experiment.")
     experiment.run()
