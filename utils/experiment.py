@@ -278,6 +278,20 @@ class Experiment:
         for i, trial in enumerate(events):
             if trial == "break":
                 self.check_in_on_participant(log_file=log_file)
+                # ask if salient intensity needs to be adjusted
+                adjust = input("Do you want to adjust the salient intensity? (y/n): ")
+                if adjust.lower() == 'y':
+                    while True:
+                        try:
+                            new_intensity = float(input(f"Enter new salient intensity (current: {self.intensities['salient']}): "))
+                            if new_intensity <= self.intensities['weak']:
+                                print(f"New salient intensity must be greater than weak intensity ({self.intensities['weak']}).")
+                            else:
+                                self.intensities['salient'] = new_intensity
+                                print(f"Salient intensity updated to {new_intensity}.")
+                                break
+                        except ValueError:
+                            print("Invalid input. Please enter a numeric value.")
                 continue
             
             event_type = trial["event_type"]

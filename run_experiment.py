@@ -287,10 +287,10 @@ if __name__ == "__main__":
     print(f"Behavioural data will be saved to: {logfile}")
 
     connectors = {
-        "middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        "index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
-        #"index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
+        #"middle":  SGCConnector(port=middle_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        #"index": SGCConnector(port=index_connector_port, intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "middle": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1),
+        "index": SGCFakeConnector(intensity_codes_path=Path("intensity_code.csv"), start_intensity=1)
     }
 
     # wait 2 seconds
@@ -322,7 +322,7 @@ if __name__ == "__main__":
 
     print_experiment_information(experiment)
     experiment.check_in_on_participant(message="Ready to begin practice block.")
-    experiment.trial_block(ISI=1.5, n_sequences=12) # practice block
+    experiment.trial_block(ISI=1.5, n_sequences=8) # practice block
 
     # possiblility to update intensities after practice
     while True:
